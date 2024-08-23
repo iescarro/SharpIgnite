@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Array.cs" />
+    <Compile Include="Cli\Make.cs" />
     <Compile Include="Cli\Db.cs" />
     <Compile Include="ColumnAttribute.cs" />
     <Compile Include="Config.cs" />
