@@ -1,6 +1,5 @@
 ﻿#region Using directives
 
-using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -10,9 +9,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("SharpIgnite")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Lightweight application framework for the web.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("iescarro")]
 [assembly: AssemblyProduct("SharpIgnite")]
 [assembly: AssemblyCopyright("Copyright 2024")]
 [assembly: AssemblyTrademark("")]
@@ -28,4 +27,4 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can use the default the Revision and 
 // Build Numbers by using the '*' as shown below:
-[assembly: AssemblyVersion("0.2.3")]
+[assembly: AssemblyVersion("0.2.5")]

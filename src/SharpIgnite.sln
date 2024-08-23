@@ -1,17 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-# SharpDevelop 4.4
-VisualStudioVersion = 15.0.28307.902
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpIgnite", "SharpIgnite\SharpIgnite.csproj", "{173AF8A6-A503-4095-8B8A-8FDC5C720CDD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpIgnite.Tests", "SharpIgnite.Tests\SharpIgnite.Tests.csproj", "{B139ECC4-982B-4934-B417-65A590F991A4}"
 EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "WebSite1(1)", "WebSite1", "{AEBBC5E4-D852-4889-B3F8-395508EE42DA}"
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "WebSite1(1)", "WebSite1\", "{AEBBC5E4-D852-4889-B3F8-395508EE42DA}"
 	ProjectSection(WebsiteProperties) = preProject
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
-		ProjectReferences = "{173af8a6-a503-4095-8b8a-8fdc5c720cdd}|SharpIgnite.dll;"
+		ProjectReferences = ""
 		Debug.AspNetCompiler.VirtualPath = "/localhost_1212"
 		Debug.AspNetCompiler.PhysicalPath = "WebSite1\"
 		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_1212\"
@@ -51,10 +50,10 @@ Global
 		{AEBBC5E4-D852-4889-B3F8-395508EE42DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEBBC5E4-D852-4889-B3F8-395508EE42DA}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{AEBBC5E4-D852-4889-B3F8-395508EE42DA}.Release|Any CPU.Build.0 = Debug|Any CPU
-		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1683B21E-D576-4C81-8DC2-A75C1D0BD00C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
