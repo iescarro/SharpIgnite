@@ -1,0 +1,8 @@
+.vs/
+obj/
+bin/
+packages/
+*.nupkg
+.cr/
+coverage.xml
+*.user
