@@ -91,7 +91,6 @@ namespace SharpIgnite
             string values = "";
             string primaryKeyColumnName = "";
             foreach (PropertyInfo property in type.GetProperties()) {
-                //if (property.GetCustomAttribute<ColumnAttribute>() != null) {
                 object value = property.GetValue(data);
                 if (property.DeclaringType == type && value != null) {
                     string columnName = "";
@@ -120,7 +119,6 @@ namespace SharpIgnite
                         }
                     }
                 }
-                //}
             }
             string primaryKeyColumn = string.IsNullOrEmpty(primaryKeyColumnName)
                 ? ""
@@ -152,34 +150,13 @@ namespace SharpIgnite
             string values = "";
             int i = 0;
             string primaryKeyColumnName = "";
-            //foreach (PropertyInfo property in type.GetProperties()) {
             foreach (var key in data.Keys) {
-                //if (property.GetCustomAttribute<ColumnAttribute>() != null) {
                 object value = data[key]; // property.GetValue(data);
                 if (value != null) {
                     if (i > 0) {
                         columns += ", ";
                         values += ", ";
                     }
-                    /*string columnName = "";
-                    ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
-                    if (!column.IsPrimaryKey) {
-                        i++;
-                        columnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
-
-                        columns += columnName;
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            values += "'" + Database.SqlSanitize(value.ToString()) + "'";
-                        } else {
-                            values += value;
-                        }
-                    } else {
-                        primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
-                    }*/
                     i++;
                     columns += key;
                     if (value is string || value is DateTime || value is DateTime?) {
@@ -188,7 +165,6 @@ namespace SharpIgnite
                         values += value;
                     }
                 }
-                //}
             }
             string primaryKeyColumn = string.IsNullOrEmpty(primaryKeyColumnName)
                 ? ""
@@ -219,8 +195,9 @@ namespace SharpIgnite
         {
             string query = GetSelectClause(database) + Endl() +
                 "FROM " + database.tableName + Endl() +
-                GetJoinClausesString(database) + Endl() +
-                GetWhereClausesString(database);
+                GetJoinClausesString(database) +
+                GetWhereClausesString(database) +
+                GetOrderByClausesString(database);
             database.LastQuery = query;
             return query;
         }
@@ -341,8 +318,10 @@ namespace SharpIgnite
         string GetJoinClausesString(Database database)
         {
             string joinClause = "";
+            int i = 0;
             foreach (var j in database.joinClauses) {
-                joinClause += j.Type + " " + j.TableName + " ON " + j.Join + Endl();
+                if (i++ > 0) joinClause += Endl();
+                joinClause += j.Type + " " + j.TableName + " ON " + j.Join;
             }
             return joinClause != "" ? joinClause + Endl() : "";
         }
@@ -355,9 +334,7 @@ namespace SharpIgnite
             }
             int i = 0;
             foreach (var w in database.whereClauses) {
-                if (i++ > 0) {
-                    whereClause += "AND ";
-                }
+                if (i++ > 0) whereClause += "AND ";
                 whereClause += w + Endl();
             }
             return whereClause != "" ? whereClause + Endl() : "";
@@ -371,9 +348,7 @@ namespace SharpIgnite
             }
             int i = 0;
             foreach (var o in database.orderByClauses) {
-                if (i++ > 0) {
-                    orderByClause += ", ";
-                }
+                if (i++ > 0) orderByClause += ", ";
                 orderByClause += o.ColumnName + " " + o.Order;
             }
             return orderByClause != "" ? orderByClause + Endl() : "";
@@ -392,9 +367,7 @@ namespace SharpIgnite
             }
             int i = 0;
             foreach (var c in database.selectClauses) {
-                if (i++ > 0) {
-                    selectClause += ", ";
-                }
+                if (i++ > 0) selectClause += ", ";
                 selectClause += c;
             }
             return selectClause;

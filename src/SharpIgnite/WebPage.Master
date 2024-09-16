@@ -1,0 +1,1 @@
+﻿<%@ Master Language="C#" EnableTheming="true" AutoEventWireup="true" CodeBehind="WebPage.Master.cs" Inherits="SharpIgnite.WebMasterPage" %>

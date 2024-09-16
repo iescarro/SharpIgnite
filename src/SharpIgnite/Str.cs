@@ -1,14 +1,17 @@
-﻿using System;
-
-namespace SharpIgnite
+﻿namespace SharpIgnite
 {
-    public static class StringHelper
+    public static class Str
     {
         public static bool IsNullOrEmpty(this string str)
         {
             return string.IsNullOrEmpty(str);
         }
-        
+
+        public static bool IsNotNullAndEmpty(this string str)
+        {
+            return !str.IsNullOrEmpty();
+        }
+
         public static string Capitalize(this string str)
         {
             if (str.Length > 0) {

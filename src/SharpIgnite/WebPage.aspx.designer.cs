@@ -7,11 +7,13 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SharpIgnite {
-    
-    
-    public partial class WebPage {
-        
+namespace SharpIgnite
+{
+
+
+    public partial class WebPage
+    {
+
         /// <summary>
         /// form1 control.
         /// </summary>

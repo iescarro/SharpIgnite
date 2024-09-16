@@ -109,23 +109,23 @@ namespace SharpIgnite
                         values += ", ";
                     }
                     /*string columnName = "";
-                    ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
-                    if (!column.IsPrimaryKey) {
-                        i++;
-                        columnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
+                        ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
+                        if (!column.IsPrimaryKey) {
+                            i++;
+                            columnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
 
-                        columns += columnName;
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            values += "'" + Database.SqlSanitize(value.ToString()) + "'";
+                            columns += columnName;
+                            if (value is string || value is DateTime || value is DateTime?) {
+                                values += "'" + Database.SqlSanitize(value.ToString()) + "'";
+                            } else {
+                                values += value;
+                            }
                         } else {
-                            values += value;
-                        }
-                    } else {
-                        primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
+                            primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
                     }*/
                     i++;
                     columns += key;

@@ -5,12 +5,12 @@ namespace SharpIgnite
 {
     public static class Config
     {
-        public static string Item(string key)
+        public static string Get(string key)
         {
-            return Item(key, "");
+            return Get(key, null);
         }
-        
-        public static string Item(string key, string defaultValue)
+
+        public static string Get(string key, string defaultValue)
         {
             var value = ConfigurationManager.AppSettings[key];
             if (value == null) {
@@ -18,18 +18,27 @@ namespace SharpIgnite
             }
             return value;
         }
-        
-        public static T Item<T>(string key)
+
+        public static T Get<T>(string key)
         {
-            return Item<T>(key, default(T));
+            return Get<T>(key, default(T));
         }
-        
-        public static T Item<T>(string key, T defaultValue)
+
+        public static T Get<T>(string key, T defaultValue)
         {
             var value = ConfigurationManager.AppSettings[key];
             if (value == null) {
                 return defaultValue;
             }
+
+            // If T is Nullable<T>, handle conversion accordingly
+            if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>)) {
+                // Convert to underlying type
+                Type underlyingType = Nullable.GetUnderlyingType(typeof(T));
+                return (T)Convert.ChangeType(value, underlyingType);
+            }
+
+            // Convert to non-nullable type
             return (T)Convert.ChangeType(value, typeof(T));
         }
     }

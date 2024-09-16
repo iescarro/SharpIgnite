@@ -3,17 +3,17 @@ using System.Data.SQLite;
 
 namespace SharpIgnite
 {
-    public class SQLiteDatabaseDriver : DatabaseDriver
+    public class SQLiteDatabaseAdapter : DatabaseAdapter
     {
-        public SQLiteDatabaseDriver() : this("")
+        public SQLiteDatabaseAdapter() : this("")
         {
         }
 
-        public SQLiteDatabaseDriver(string connectionString) : this(connectionString, new SQLiteQueryBuilder())
+        public SQLiteDatabaseAdapter(string connectionString) : this(connectionString, new SQLiteQueryBuilder())
         {
         }
 
-        public SQLiteDatabaseDriver(string connectionString, ISqlQueryBuilder queryBuilder)
+        public SQLiteDatabaseAdapter(string connectionString, ISqlQueryBuilder queryBuilder)
         {
             this.ConnectionString = connectionString;
             this.QueryBuilder = queryBuilder;

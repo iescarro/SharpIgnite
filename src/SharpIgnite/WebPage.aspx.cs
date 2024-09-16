@@ -8,7 +8,7 @@ namespace SharpIgnite
     {
         public WebPage() : base()
         {
-            var database = Database;
+            var database = this.Database;
 
             database.QueryChanged += new EventHandler<DatabaseEventArgs>(DatabaseQueryChanged);
         }
@@ -17,7 +17,7 @@ namespace SharpIgnite
 
         void DatabaseQueryChanged(object sender, DatabaseEventArgs e)
         {
-            var s = @"<code>" + e.StyledQuery + "</code>"; ;
+            var s = @"<code>" + e.StyledQuery + "</code>";
             databaseOutput += s;
         }
 
@@ -27,19 +27,19 @@ namespace SharpIgnite
         }
 
         public Database Database {
-            get { return WebApplication.Instance.Database; }
+            get { return SharpIgnite.Application.Instance.Database; }
         }
 
         public Input Input {
-            get { return WebApplication.Instance.Input; }
+            get { return SharpIgnite.Application.Instance.Input; }
         }
 
         public Output Output {
-            get { return WebApplication.Instance.Output; }
+            get { return SharpIgnite.Application.Instance.Output; }
         }
 
-        public Lang Lang {
-            get { return WebApplication.Instance.Lang; }
+        public Localizer @Localizer {
+            get { return SharpIgnite.Application.Instance.Localizer; }
         }
 
         public void Write(string s)
@@ -54,7 +54,7 @@ namespace SharpIgnite
 
         protected ServiceProvider serviceProvider {
             get {
-                var services = WebApplication.Instance.ServiceCollection;
+                var services = SharpIgnite.Application.Instance.ServiceCollection;
                 var provider = services.BuildServiceProvider();
                 return provider;
             }
@@ -88,8 +88,7 @@ namespace SharpIgnite
 
         public T GetSession<T>(string name, T defaultValue)
         {
-            return WebApplication.Instance.GetSession<T>(name, defaultValue);
-
+            return SharpIgnite.Application.Instance.GetSession<T>(name, defaultValue);
         }
 
         public object GetSession(string name)
@@ -99,32 +98,38 @@ namespace SharpIgnite
 
         public object GetSession(string name, object defaultValue)
         {
-            return WebApplication.Instance.GetSession(name, defaultValue);
+            return SharpIgnite.Application.Instance.GetSession(name, defaultValue);
         }
 
+        [Obsolete()]
         public void SetSession(string name, object value)
         {
-            WebApplication.Instance.SetSession(name, value);
+            SharpIgnite.Application.Instance.SetSession(name, value);
+        }
+
+        public void SessionSet(string name, object value)
+        {
+            SharpIgnite.Application.Instance.SessionSet(name, value);
         }
 
         public void SetSessionIf(bool condition, string name, object value)
         {
             if (condition) {
-                WebApplication.Instance.SetSession(name, value);
+                SharpIgnite.Application.Instance.SetSession(name, value);
             }
         }
 
         public void RemoveSession(params string[] sessions)
         {
             foreach (var session in sessions) {
-                WebApplication.Instance.RemoveSession(sessions);
+                SharpIgnite.Application.Instance.RemoveSession(sessions);
             }
         }
 
         public void RemoveSessionIf(bool condition, string name)
         {
             if (condition) {
-                WebApplication.Instance.RemoveSession(name);
+                SharpIgnite.Application.Instance.RemoveSession(name);
             }
         }
 

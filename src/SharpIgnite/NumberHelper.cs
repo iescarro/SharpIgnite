@@ -8,7 +8,7 @@ namespace SharpIgnite
         {
             return (new Random(unchecked((int)DateTime.Now.Ticks))).Next();
         }
-        
+
         public static int Ceiling(this int i)
         {
             int d = 10;

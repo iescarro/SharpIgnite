@@ -4,21 +4,21 @@ using System.Reflection;
 
 namespace SharpIgnite
 {
-    public class WebApplication
+    public class Application
     {
-        static WebApplication instance;
+        static Application instance;
         string entryPageName;
         public Input Input { get; set; }
         public Output Output { get; set; }
         public Router Routes { get; set; }
-        public Lang Lang { get; set; }
+        public Localizer @Localizer { get; set; }
         public Session Session { get; set; }
         static System.Web.UI.Page entryPage;
         Database database;
-        ServiceCollection serviceCollection;
+        ServiceCollection serviceCollection; // TODO: Replica of MVC Core service provider. Remove this soon
 
         public Database Database {
-            get { return database; }
+            get { return SharpIgnite.Database.Instance; }
         }
 
         public string BaseUrl(string url)
@@ -34,55 +34,90 @@ namespace SharpIgnite
             return "/" + url;
         }
 
-        public static WebApplication Instance {
+        public static Application Instance {
             get {
                 if (instance == null) {
-                    instance = new WebApplication();
+                    instance = new Application();
                 }
                 return instance;
             }
         }
 
-        private WebApplication()
+        private Application()
         {
             Input = new Input();
             Output = new Output();
             Routes = new Router();
-            Lang = new Lang();
+            @Localizer = new Localizer();
             Session = new Session();
 
-            var connectionString = Config.Item("DbConnection"); ;
-            var databaseDriver = GetDatabaseDriver(connectionString);
-            database = new Database(databaseDriver);
+            //var connectionString = Config.Get("DB_CONNECTION_STRING") ?? Config.Get("SqlConnection");
+            //var databaseDriver = GetDatabaseDriver(connectionString);
+            //database = new Database(databaseDriver);
 
             serviceCollection = new ServiceCollection();
         }
 
+        public T SessionGet<T>(string name)
+        {
+            return SessionGet(name, default(T));
+        }
+
+        public T SessionGet<T>(string name, T defaultValue)
+        {
+            return Session.Get<T>(name, defaultValue);
+        }
+
+        public void SessionSet(string name, object value)
+        {
+            Session.Set(name, value);
+        }
+
+        public void SessionSetIf(bool condition, string name, object value)
+        {
+            if (condition) {
+                Session.Set(name, value);
+            }
+        }
+
+        public void SessionRemove(params string[] sessions)
+        {
+            foreach (var session in sessions) {
+                Session.Remove(session);
+            }
+        }
+
+        [Obsolete]
         public T GetSession<T>(string name)
         {
             return GetSession(name, default(T));
         }
 
+        [Obsolete]
         public T GetSession<T>(string name, T defaultValue)
         {
             return Session.Get<T>(name, defaultValue);
         }
 
+        [Obsolete]
         public object GetSession(string name)
         {
             return GetSession(name, null);
         }
 
+        [Obsolete]
         public object GetSession(string name, object defaultValue)
         {
             return Session.Get(name, defaultValue);
         }
 
+        [Obsolete]
         public void SetSession(string name, object value)
         {
             Session.Set(name, value);
         }
 
+        [Obsolete()]
         public void SetSessionIf(bool condition, string name, object value)
         {
             if (condition) {
@@ -90,6 +125,7 @@ namespace SharpIgnite
             }
         }
 
+        [Obsolete]
         public void RemoveSession(params string[] sessions)
         {
             foreach (var session in sessions) {
@@ -97,18 +133,18 @@ namespace SharpIgnite
             }
         }
 
-        IDatabaseDriver GetDatabaseDriver(string connectionString)
-        {
-            string dbDriver = Config.Item("DbAdapter");
-            switch (dbDriver) {
-                case "MySql.Data.MySqlClient":
-                    return new MySqlDatabaseDriver(connectionString, new MySqlQueryBuilder());
-                case "System.Data.SQLite":
-                    return new SQLiteDatabaseDriver(connectionString, new SQLiteQueryBuilder());
-                default:
-                    return new SqlDatabaseDriver(connectionString, new SqlQueryBuilder());
-            }
-        }
+        //IDatabaseDriver GetDatabaseDriver(string connectionString)
+        //{
+        //    string dbDriver = Config.Get("DbAdapter");
+        //    switch (dbDriver) {
+        //        case "MySql.Data.MySqlClient":
+        //            return new MySqlDatabaseDriver(connectionString, new MySqlQueryBuilder());
+        //        case "System.Data.SQLite":
+        //            return new SQLiteDatabaseDriver(connectionString, new SQLiteQueryBuilder());
+        //        default:
+        //            return new SqlDatabaseDriver(connectionString, new SqlQueryBuilder());
+        //    }
+        //}
 
         public static void Run(string url, System.Web.UI.Page entryPage, Assembly assembly)
         {
@@ -116,7 +152,7 @@ namespace SharpIgnite
 
             var route = new Route(new Uri(url));
 
-            WebApplication.entryPage = entryPage;
+            Application.entryPage = entryPage;
             app.entryPageName = route.PageName;
 
             if (app.Routes.ContainsKey(route.Name)) {

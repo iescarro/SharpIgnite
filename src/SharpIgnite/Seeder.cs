@@ -1,56 +1,50 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
-using System.Data.SqlClient;
-using System.IO;
-using System.Reflection;
 
 namespace SharpIgnite
 {
-    public abstract class DatabaseSeeder
+    public abstract class Seeder
     {
-        IDatabaseDriver databaseDriver;
+        IDatabaseAdapter databaseAdapter;
 
         public virtual void Initialize()
         {
         }
-        
+
         public virtual void Run()
         {
         }
-        
+
         public virtual void Rollback()
         {
         }
-        
+
         protected Database db;
-        
+
         public Database Database {
             get { return db; }
             set { db = value; }
         }
-        
-        public DatabaseSeeder(string connectionString)
+
+        public Seeder(string connectionString)
         {
-            var databaseDriver = new SqlDatabaseDriver(connectionString); // TODO: Make this configurable!
-            this.db = new Database(databaseDriver);
+            var databaseAdapter = new SqlDatabaseAdapter(connectionString); // TODO: Make this configurable!
+            this.db = Database.Instance.Adapter(databaseAdapter); // new Database(databaseDriver);
         }
-        
-        public DatabaseSeeder()
+
+        public Seeder()
         {
             var connectionString = ConfigurationManager.AppSettings["SqlConnection"];
-            var databaseDriver = new SqlDatabaseDriver(connectionString); // TODO: Make this configurable!
-            this.db = new Database(databaseDriver);
+            var databaseAdapter = new SqlDatabaseAdapter(connectionString); // TODO: Make this configurable!
+            this.db = Database.Instance.Adapter(databaseAdapter); // new Database(databaseDriver);
         }
-        
-        public DatabaseSeeder(IDatabaseDriver databaseDriver)
+
+        public Seeder(IDatabaseAdapter databaseAdapter)
         {
-            this.databaseDriver = databaseDriver;
-            this.db = new Database(databaseDriver);
+            this.databaseAdapter = databaseAdapter;
+            this.db = Database.Instance.Adapter(databaseAdapter);// new Database(databaseDriver);
         }
-        
+
         public event EventHandler<SeederEventArgs> Seeding;
 
         public void LoadDatabaseConnection(string connection)
@@ -71,7 +65,7 @@ namespace SharpIgnite
         {
             OnSeeding(new SeederEventArgs(message));
         }
-        
+
         protected virtual void OnSeeding(SeederEventArgs e)
         {
             if (Seeding != null) {
@@ -79,15 +73,15 @@ namespace SharpIgnite
             }
         }
     }
-    
+
     public class SeederEventArgs : EventArgs
     {
         public string Message { get; set; }
-        
+
         public SeederEventArgs()
         {
         }
-        
+
         public SeederEventArgs(string message)
         {
             this.Message = message;

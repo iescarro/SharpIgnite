@@ -17,15 +17,8 @@ namespace SharpIgnite
         {
             database.tableName = tableName;
             string cols = "";
-            int i = 0;
-            foreach (var c in columns) {
-                if (i++ > 0) cols += ", " + Endl();
-                var p = c.IsPrimaryKey ? " PRIMARY KEY" : "";
-                var a = c.IsAutoIncrement ? " AUTO_INCREMENT" : "";
-                cols += "  " + c.Name + " " + GetDbType(c.Type, c.Size) + p + a;
-            }
             string query = "CREATE TABLE " + tableName + "(" + Endl() +
-                cols + Endl() +
+                cols.TrimEnd(',').Trim(' ') + Endl() +
                 ");" + Endl();
             return query;
         }
@@ -38,36 +31,29 @@ namespace SharpIgnite
             string values = "";
             string primaryKeyColumnName = "";
             foreach (PropertyInfo property in type.GetProperties()) {
-                //if (property.GetCustomAttribute<ColumnAttribute>() != null) {
-                object value = property.GetValue(data);
-                if (property.DeclaringType == type && value != null) {
-                    string columnName = "";
-                    ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
-                    if (column != null && !column.AutoIncrement) {
-                        columnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
+                if (property.GetCustomAttribute<ColumnAttribute>() != null) {
+                    object value = property.GetValue(data);
+                    if (value != null) {
+                        string columnName = "";
+                        ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
+                        if (!column.IsPrimaryKey) {
+                            columnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
 
-                        columns += columnName + ", ";
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            values += "'" + Database.SqlSanitize(value.ToString()) + "', ";
+                            columns += columnName;
+                            if (value is string || value is DateTime || value is DateTime?) {
+                                values += "'" + Database.SqlSanitize(value.ToString()) + "', ";
+                            } else {
+                                values += value + ", ";
+                            }
                         } else {
-                            values += value + ", ";
-                        }
-                    } else if (column != null && column.IsPrimaryKey) {
-                        primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
-                    } else {
-                        columns += property.Name + ", ";
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            values += "'" + Database.SqlSanitize(value.ToString()) + "', ";
-                        } else {
-                            values += value + ", ";
+                            primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
                         }
                     }
                 }
-                //}
             }
             string primaryKeyColumn = string.IsNullOrEmpty(primaryKeyColumnName)
                 ? ""
@@ -75,7 +61,7 @@ namespace SharpIgnite
             string query = "INSERT INTO " + tableName + "(" + columns.TrimEnd(',', ' ') + ")" + Endl() +
                 primaryKeyColumn +
                 "VALUES(" + values.TrimEnd(',', ' ') + ");" + Endl() +
-                "SELECT LAST_INSERT_ID() AS LastInsertedId;" + Endl();
+                "SELECT LAST_INSERT_ID();";
             return query;
         }
 
@@ -99,43 +85,35 @@ namespace SharpIgnite
             string values = "";
             int i = 0;
             string primaryKeyColumnName = "";
-            //foreach (PropertyInfo property in type.GetProperties()) {
-            foreach (var key in data.Keys) {
-                //if (property.GetCustomAttribute<ColumnAttribute>() != null) {
-                object value = data[key]; // property.GetValue(data);
-                if (value != null) {
-                    if (i > 0) {
-                        columns += ", ";
-                        values += ", ";
-                    }
-                    /*string columnName = "";
-                    ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
-                    if (!column.IsPrimaryKey) {
-                        i++;
-                        columnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
-
-                        columns += columnName;
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            values += "'" + Database.SqlSanitize(value.ToString()) + "'";
-                        } else {
-                            values += value;
+            foreach (PropertyInfo property in type.GetProperties()) {
+                if (property.GetCustomAttribute<ColumnAttribute>() != null) {
+                    object value = property.GetValue(data);
+                    if (value != null) {
+                        if (i > 0) {
+                            columns += ", ";
+                            values += ", ";
                         }
-                    } else {
-                        primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
-                    }*/
-                    i++;
-                    columns += key;
-                    if (value is string || value is DateTime || value is DateTime?) {
-                        values += "'" + Database.SqlSanitize(value.ToString()) + "'";
-                    } else {
-                        values += value;
+                        string columnName = "";
+                        ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
+                        if (!column.IsPrimaryKey) {
+                            i++;
+                            columnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
+
+                            columns += columnName;
+                            if (value is string || value is DateTime || value is DateTime?) {
+                                values += "'" + Database.SqlSanitize(value.ToString()) + "'";
+                            } else {
+                                values += value;
+                            }
+                        } else {
+                            primaryKeyColumnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
+                        }
                     }
                 }
-                //}
             }
             string primaryKeyColumn = string.IsNullOrEmpty(primaryKeyColumnName)
                 ? ""
@@ -150,10 +128,9 @@ namespace SharpIgnite
         {
             string query = GetSelectClause(database) + Endl() +
                 "FROM " + database.tableName + Endl() +
-                GetJoinClausesString(database) +
-                GetWhereClausesString(database) +
-                GetOrderByClausesString(database) +
-                GetLimitString(database);
+                GetJoinClausesString(database) + Endl() +
+                GetWhereClausesString(database) + Endl() +
+                GetOrderByClausesString(database);
 
             string styledQuery = "<br>" +
                 "<span style='color:#0000BB'>FROM</span ";
@@ -219,41 +196,34 @@ namespace SharpIgnite
             database.tableName = tableName;
             database.whereClauses.Add(_where);
             Type type = data.GetType();
-            string assignments = "";
+            string query = "UPDATE " + database.tableName + " SET" + Endl();
+            int i = 0;
             foreach (PropertyInfo property in type.GetProperties()) {
-                //if (property.GetCustomAttribute<ColumnAttribute>() != null) {
-                object value = property.GetValue(data);
-                if (property.DeclaringType == type && value != null) {
-                    string columnName = "";
-                    ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
-                    if (column != null && !column.IsPrimaryKey && !column.AutoIncrement) {
-                        columnName = string.IsNullOrEmpty(column.Name)
-                            ? property.Name
-                            : column.Name;
+                if (property.GetCustomAttribute<ColumnAttribute>() != null) {
+                    object value = property.GetValue(data);
+                    if (value != null) {
+                        if (i > 0) {
+                            query += ", " + Endl();
+                        }
+                        string columnName = "";
+                        ColumnAttribute column = (ColumnAttribute)property.GetCustomAttribute(typeof(ColumnAttribute));
+                        if (!column.IsPrimaryKey) {
+                            i++;
+                            columnName = string.IsNullOrEmpty(column.Name)
+                                ? property.Name
+                                : column.Name;
 
-                        assignments += columnName + " = ";
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            assignments += "'" + Database.SqlSanitize(value.ToString()) + "'";
-                        } else {
-                            assignments += value;
+                            query += columnName + " = ";
+                            if (value is string) {
+                                query += "'" + Database.SqlSanitize(value.ToString()) + "'";
+                            } else {
+                                query += value;
+                            }
                         }
-                        assignments += "," + Endl();
-                    } else if (column == null) {
-                        columnName = property.Name;
-                        assignments += columnName + " = ";
-                        if (value is string || value is DateTime || value is DateTime?) {
-                            assignments += "'" + Database.SqlSanitize(value.ToString()) + "'";
-                        } else {
-                            assignments += value;
-                        }
-                        assignments += "," + Endl();
                     }
                 }
-                //}
             }
-            string query = "UPDATE " + database.tableName + " SET" + Endl() +
-                assignments.Trim().TrimEnd(',', ' ') + Endl() +
-                GetWhereClausesString(database);
+            query += Endl() + GetWhereClausesString(database);
             database.LastQuery = query;
             return query;
         }
@@ -292,7 +262,7 @@ namespace SharpIgnite
             foreach (var j in database.joinClauses) {
                 joinClause += j.Type + " " + j.TableName + " ON " + j.Join + Endl();
             }
-            return joinClause != "" ? joinClause + Endl() : "";
+            return joinClause;
         }
 
         string GetWhereClausesString(Database database)
@@ -308,7 +278,7 @@ namespace SharpIgnite
                 }
                 whereClause += w + Endl();
             }
-            return whereClause != "" ? whereClause + Endl() : "";
+            return whereClause;
         }
 
         string GetOrderByClausesString(Database database)
@@ -324,16 +294,19 @@ namespace SharpIgnite
                 }
                 orderByClause += o.ColumnName + " " + o.Order;
             }
-            return orderByClause != "" ? orderByClause + Endl() : "";
+            return orderByClause;
         }
 
         string GetSelectClause(Database database)
         {
             var selectClause = "";
+            var limitClause = database._limit > 0
+                ? "TOP " + database._limit
+                : "";
             if (database.selectClauses.Count > 0) {
-                selectClause += "SELECT ";
+                selectClause += "SELECT " + limitClause + " ";
             } else {
-                selectClause += "SELECT * ";
+                selectClause += "SELECT " + limitClause + " * ";
             }
             int i = 0;
             foreach (var c in database.selectClauses) {
@@ -343,14 +316,6 @@ namespace SharpIgnite
                 selectClause += c;
             }
             return selectClause;
-        }
-
-        string GetLimitString(Database database)
-        {
-            var limitClause = database._limit > 0
-                ? "LIMIT " + database._limit
-                : "";
-            return limitClause;
         }
 
         string GetGroupByClauseString(string groupByClause)

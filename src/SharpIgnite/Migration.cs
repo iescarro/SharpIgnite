@@ -4,22 +4,22 @@ using System.Data;
 namespace SharpIgnite
 {
     [Table("SchemaMigration")]
-    public abstract class Migration
+    public class Migration
     {
         public string Version { get; set; }
         public Database Database { get; set; }
-        
+
         public Migration(string version)
         {
             this.Version = version;
-            this.Database = WebApplication.Instance.Database;
+            this.Database = Database.Instance; //Application.Instance.Database;
         }
 
         public virtual void Initialize()
         {
-            
+
         }
-        
+
         public bool SchemaExists {
             get {
                 // HACK: Improve this!
@@ -45,21 +45,21 @@ WHERE Version = '" + Version + "'");
             }
         }
 
-        public virtual void Migrate()
+        public virtual void Up()
         {
         }
-        
-        public virtual void Rollback()
+
+        public virtual void Down()
         {
         }
-        
+
         public void DropTable(string tableName)
         {
             OnMigrating("Dropping table " + tableName + "...");
             Database.Drop(tableName);
             OnMigrated("OK");
         }
-        
+
         public void CreateTable(string tableName, params DatabaseColumn[] columns)
         {
             OnMigrating(new MigrationEventArgs("Creating table " + tableName + "..."));
@@ -67,12 +67,12 @@ WHERE Version = '" + Version + "'");
                 .Create(tableName);
             OnMigrated("OK");
         }
-        
+
         public DatabaseColumn Column(string name)
         {
-            return Column(name,  DbType.String);
+            return Column(name, DbType.String);
         }
-        
+
         public DatabaseColumn Column(string name, DbType type)
         {
             return Column(name, type, false, false);
@@ -87,26 +87,26 @@ WHERE Version = '" + Version + "'");
         {
             return Column(name, type, primaryKey, false);
         }
-        
+
         public DatabaseColumn Column(string name, DbType type, bool isPrimaryKey, bool isAutoIncrement)
         {
             return new DatabaseColumn { Name = name, Type = type, IsPrimaryKey = isPrimaryKey, IsAutoIncrement = isAutoIncrement };
         }
-        
+
         public event EventHandler<MigrationEventArgs> Migrating;
-        
+
         protected virtual void OnMigrating(string message)
         {
             OnMigrating(new MigrationEventArgs(message));
         }
-        
+
         protected virtual void OnMigrating(MigrationEventArgs e)
         {
             if (Migrating != null) {
                 Migrating(this, e);
             }
         }
-        
+
         public event EventHandler<MigrationEventArgs> Migrated;
 
         public void LoadDatabaseConnection(string connection)
@@ -127,7 +127,7 @@ WHERE Version = '" + Version + "'");
         {
             OnMigrated(new MigrationEventArgs(message));
         }
-        
+
         protected virtual void OnMigrated(MigrationEventArgs e)
         {
             if (Migrated != null) {
@@ -135,12 +135,12 @@ WHERE Version = '" + Version + "'");
             }
         }
     }
-    
+
     public class MigrationEventArgs : EventArgs
     {
         public Migration Migration { get; set; }
         public string Message { get; set; }
-        
+
         public MigrationEventArgs(string message)
         {
             this.Message = message;

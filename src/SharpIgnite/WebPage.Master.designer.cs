@@ -11,7 +11,7 @@ namespace SharpIgnite
 {
 
 
-    public partial class WebView
+    public partial class WebMasterPage
     {
     }
 }

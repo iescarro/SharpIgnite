@@ -17,11 +17,11 @@ namespace SharpIgnite.Cli
             var config = GetConfigFromAssembly(assembly);
 
             var seeders = assembly.GetTypes()
-                .Where(type => type.IsClass && !type.IsAbstract && typeof(DatabaseSeeder).IsAssignableFrom(type));
+                .Where(type => type.IsClass && !type.IsAbstract && typeof(Seeder).IsAssignableFrom(type));
 
             Console.WriteLine(seeders.Count() + " seeders found.");
             foreach (var seeder in seeders) {
-                var obj = Activator.CreateInstance(seeder) as DatabaseSeeder;
+                var obj = Activator.CreateInstance(seeder) as Seeder;
                 Console.WriteLine("Running seed " + obj);
                 obj.DatabaseConnectionLoad += delegate (object sender, DatabaseEventArgs e) {
                     var connection = e.Connection;
@@ -78,7 +78,7 @@ namespace SharpIgnite.Cli
                     );
                 }
                 if (!obj.VersionExists) {
-                    obj.Migrate();
+                    obj.Up();
                     obj.Database.Insert("SchemaMigration", new { Version = obj.Version });
                     count++;
                 }
@@ -109,6 +109,14 @@ namespace SharpIgnite.Cli
                 }
                 return "DbType.String";
             }
+        }
+    }
+
+    public class BaseCli
+    {
+        public string Endl()
+        {
+            return Environment.NewLine;
         }
     }
 }

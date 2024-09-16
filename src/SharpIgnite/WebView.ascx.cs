@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 
 namespace SharpIgnite
 {
@@ -15,5 +10,11 @@ namespace SharpIgnite
         }
 
         public SharpIgnite.Array Data { get; set; }
+        public SharpIgnite.Array ViewData { get; set; }
+
+        public string CsrfToken()
+        {
+            return Form.Hidden("__token", Guid.NewGuid().ToString());
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
+using System.Reflection;
 
 namespace SharpIgnite
 {
@@ -36,6 +36,20 @@ namespace SharpIgnite
         internal int _limit;
         internal int insertedId;
 
+        static Database instance = null;
+
+        public static Database Instance {
+            get {
+                if (instance == null) {
+                    var providerName = Config.Get("DB_CONNECTION") ?? "sqlserver"; // TODO: We don't need to default to SQL Server, it should be SQLite or some free DB. Maybe?
+                    var connectionString = Config.Get("DB_CONNECTION_STRING") ?? Config.Get("SqlConnection"); // TODO: Will be removing SqlConnection soon, we'll be using standard DB_CONNECTION
+                    var databaseAdapter = GetDatabaseAdapter(providerName, connectionString);
+                    instance = new Database(databaseAdapter);
+                }
+                return instance;
+            }
+        }
+
         public string LastQuery {
             get { return lastQuery; }
             internal set {
@@ -54,40 +68,59 @@ namespace SharpIgnite
             }
         }
 
-        IDatabaseDriver databaseDriver;
+        IDatabaseAdapter databaseAdapter;
 
-        public Database() : this(ConfigurationManager.AppSettings["SqlConnection"])
+        private Database(IDatabaseAdapter databaseAdapter)
         {
-        }
-
-        public Database(string connectionString) : this(new SqlDatabaseDriver(connectionString))
-        {
-        }
-
-        public Database(IDatabaseDriver databaseDriver)
-        {
-            this.databaseDriver = databaseDriver;
-            this.databaseDriver.Database = this;
+            this.databaseAdapter = databaseAdapter;
+            this.databaseAdapter.Database = this;
 
             this.Data = new Dictionary<string, object>();
         }
 
         public Database Load(string connectionName)
         {
-            this.databaseDriver.ConnectionString = ConfigurationManager.AppSettings[connectionName];
+            this.databaseAdapter.ConnectionString = Config.Get(connectionName); // ConfigurationManager.AppSettings[connectionName];
             return this;
         }
 
         public Database LoadConnectionString(string connectionString)
         {
-            this.databaseDriver.ConnectionString = connectionString;
+            this.databaseAdapter.ConnectionString = connectionString;
             return this;
         }
 
-        public Database Adapter(IDatabaseDriver databaseDriver)
+        static IDatabaseAdapter GetDatabaseAdapter(string connector)
         {
-            this.databaseDriver = databaseDriver;
-            this.databaseDriver.Database = this;
+            var connectionString = Config.Get("DB_CONNECTION_STRING") ?? Config.Get("SqlConnection");
+            return GetDatabaseAdapter(connector, connectionString);
+        }
+
+        static IDatabaseAdapter GetDatabaseAdapter(string connector, string connectionString)
+        {
+            if (connector == "mysql") {
+                return new MySqlDatabaseAdapter(connectionString);
+            } else if (connector == "sqlite") {
+                return new SQLiteDatabaseAdapter(connectionString);
+            } else if (connector == "sqlserver") {
+                return new SqlDatabaseAdapter(connectionString);
+            } else {
+                throw new NotSupportedException("Database provider is not supported");
+            }
+        }
+
+        public Database Adapter(string providerName)
+        {
+            var databaseAdapter = GetDatabaseAdapter(providerName);
+            this.databaseAdapter = databaseAdapter;
+            this.databaseAdapter.Database = this;
+            return this;
+        }
+
+        public Database Adapter(IDatabaseAdapter databaseAdapter)
+        {
+            this.databaseAdapter = databaseAdapter;
+            this.databaseAdapter.Database = this;
             return this;
         }
 
@@ -114,18 +147,15 @@ namespace SharpIgnite
             return this;
         }
 
-        public Database Where(string _where)
+        public Database Where(object obj)
         {
-            this.whereClauses.Add(_where);
-            return this;
-        }
-
-        public Database Where(Array array)
-        {
-            foreach (var key in array.Keys) {
-                var value = array[key];
-                this.whereClauses.Add(new WhereClause(key.ToString(), value).ToString());
+            var type = obj.GetType();
+            foreach (PropertyInfo property in type.GetProperties()) {
+                string columnName = property.Name;
+                object value = property.GetValue(obj);
+                this.whereClauses.Add(new WhereClause(columnName, value).ToString());
             }
+
             return this;
         }
 
@@ -175,12 +205,6 @@ namespace SharpIgnite
             return this;
         }
 
-        public Database Get(string tableName)
-        {
-            this.tableName = tableName;
-            return this;
-        }
-
         public Database GetWhere(string tableName, Array _where)
         {
             foreach (var key in _where.Keys) {
@@ -214,12 +238,12 @@ namespace SharpIgnite
 
         public int Drop(string tableName)
         {
-            return databaseDriver.Drop(tableName);
+            return databaseAdapter.Drop(tableName);
         }
 
         public int Create(string tableName)
         {
-            return databaseDriver.Create(tableName, this.columns.ToArray());
+            return databaseAdapter.Create(tableName, this.columns.ToArray());
         }
 
         public Database Columns(params DatabaseColumn[] columns)
@@ -244,25 +268,18 @@ namespace SharpIgnite
             return this;
         }
 
-        /*public int Insert(string tableName, Dictionary<string, object> data)
+        public int Insert<T>(IEnumerable<T> data)
         {
-            return databaseDriver.Insert(tableName, data);
-        }*/
+            foreach (var d in data) {
+                insertedId = databaseAdapter.Insert<T>(tableName, d);
+            }
+            return -1; // insertedId;
+        }
 
         public int Insert<T>(string tableName, T data)
         {
-            insertedId = databaseDriver.Insert<T>(tableName, data);
+            insertedId = databaseAdapter.Insert<T>(tableName, data);
             return insertedId;
-        }
-
-        public int Insert<T>(string tableName, List<T> data)
-        {
-            return databaseDriver.Insert<T>(tableName, data);
-        }
-
-        public int Insert(string tableName, Array data)
-        {
-            return databaseDriver.Insert(tableName, data);
         }
 
         public int InsertedId()
@@ -272,22 +289,27 @@ namespace SharpIgnite
 
         public List<T> Result<T>()
         {
-            return databaseDriver.Result<T>();
+            return databaseAdapter.Result<T>();
         }
 
         public List<T> Query<T>(string query)
         {
-            return databaseDriver.Query<T>(query);
+            return databaseAdapter.Query<T>(query);
         }
 
         public T Row<T>()
         {
-            return databaseDriver.Row<T>();
+            return databaseAdapter.Row<T>();
+        }
+
+        public Array Row()
+        {
+            return databaseAdapter.Row();
         }
 
         public T QueryFirst<T>(string query)
         {
-            return databaseDriver.QueryFirst<T>(query);
+            return databaseAdapter.QueryFirst<T>(query);
         }
 
         public int Count()
@@ -297,46 +319,51 @@ namespace SharpIgnite
 
         public int Count(string tableName)
         {
-            return this.databaseDriver.Count(tableName);
+            return this.databaseAdapter.Count(tableName);
         }
 
         public int Update(string tableName)
         {
             this.tableName = tableName;
-            return databaseDriver.Update(tableName);
+            return databaseAdapter.Update(tableName);
         }
 
         public int Update<T>(string tableName, T data, Array _where)
         {
             this.tableName = tableName;
-            return databaseDriver.Update(tableName, data, _where);
+            return databaseAdapter.Update(tableName, data, _where);
         }
 
         public int Update<T>(string tableName, T data, string _where)
         {
             this.tableName = tableName;
-            return databaseDriver.Update(tableName, data, _where);
+            return databaseAdapter.Update(tableName, data, _where);
         }
 
         public int Update(string tableName, object data, Array _where)
         {
             this.tableName = tableName;
-            return databaseDriver.Update(tableName, data, _where);
+            return databaseAdapter.Update(tableName, data, _where);
         }
 
         public int Delete(string tableName, Array _where)
         {
-            return databaseDriver.Delete(tableName, _where);
+            return databaseAdapter.Delete(tableName, _where);
         }
 
         public int Delete(string tableName, string _where)
         {
-            return databaseDriver.Delete(tableName, _where);
+            return databaseAdapter.Delete(tableName, _where);
+        }
+
+        public int Truncate()
+        {
+            return databaseAdapter.Truncate(tableName);
         }
 
         public int Truncate(string tableName)
         {
-            return databaseDriver.Truncate(tableName);
+            return databaseAdapter.Truncate(tableName);
         }
 
         public static string SqlSanitize(object value)
@@ -347,7 +374,7 @@ namespace SharpIgnite
 
         public void QueryFromFile(string filePath)
         {
-            databaseDriver.QueryFromFile(filePath);
+            databaseAdapter.QueryFromFile(filePath);
         }
 
         public class WhereClause

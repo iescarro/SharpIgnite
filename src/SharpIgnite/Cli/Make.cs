@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SharpIgnite.Cli
 {
-    public class Make
+    public class Make : BaseCli
     {
         public void Seeder(string name)
         {
@@ -30,7 +30,7 @@ namespace Seeders
 
         public void MigrationFromDB(string connectionString)
         {
-            var db = WebApplication.Instance.Database;
+            var db = Application.Instance.Database;
             db.LoadConnectionString(connectionString);
 
             var tables = db.Query<Db.Table>(@"
@@ -114,10 +114,10 @@ ${Columns}
         public void Migration(string name)
         {
             string className = GetClassName(name);
-            string filePath = className + ".cs";
+            string filePath = Path.Combine("Migrations", className + ".cs");
             string migrate = "";
-            string content = @"using System;
-using SharpIgnite;
+            string content = @"using SharpIgnite;
+using System.Data;
 
 namespace Migrations
 {
@@ -127,12 +127,12 @@ namespace Migrations
         {
         }
         
-        public override void Migrate()
+        public override void Up()
         {
 ${Migrate}
         }
         
-        public override void Rollback()
+        public override void Down()
         {
         }
     }

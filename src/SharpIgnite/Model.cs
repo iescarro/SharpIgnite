@@ -1,18 +1,88 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace SharpIgnite
 {
-    public class Model<T>
+    public class ValidationError
+    {
+        public string Message { get; set; }
+
+        public ValidationError() { }
+
+        public ValidationError(string message)
+        {
+            this.Message = message;
+        }
+    }
+
+    public partial class Model<T> : Validator
     {
         public Model()
         {
+            Errors = new List<string>();
+            validators = new List<IValidator>();
         }
+
+        // TODO: Remove me, not needed, please refer to Id property of specific model!
+        //public virtual int Id { get; set; }
+
+        public override bool IsValid {
+            get {
+                Validate(this);
+                return Errors.Count <= 0;
+            }
+        }
+
+        public override void Validate(object obj)
+        {
+            Errors.Clear();
+            ExecuteValidators();
+            var type = obj.GetType();
+            var properties = type.GetProperties();
+            foreach (var property in properties) {
+                var validatorAttributes = property
+                    .GetCustomAttributes<ValidatorAttribute>()
+                    .ToList();
+                if (validatorAttributes.Any()) {
+                    // Iterate over each ValidatorAttribute (e.g., Required, IsEmail)
+                    foreach (var attribute in validatorAttributes) {
+                        var validator = attribute.Validator;
+                        object value = property.GetValue(obj);
+                        validator.Validate(value);
+                        AddErrorIf(!validator.IsValid, attribute.Message);
+                    }
+                }
+            }
+        }
+
+        void AddErrorIf(bool condition, string message)
+        {
+            if (condition) {
+                Errors.Add(message);
+            }
+        }
+
+        public void ExecuteValidators()
+        {
+            foreach (var validator in validators) {
+                validator.Validate(this);
+            }
+        }
+
+        public void ValidatesWith(IValidator validator)
+        {
+            this.validators.Add(validator);
+        }
+
+        public List<string> Errors { get; set; }
+        List<IValidator> validators;
 
         public Database Database {
             get {
-                return WebApplication.Instance.Database;
+                // TODO: Doesn't need to be dependent on the whole SharpIgnite Application
+                return Application.Instance.Database;
             }
         }
 
@@ -65,6 +135,7 @@ namespace SharpIgnite
                 }
             }
             return array;
+
         }
 
         List<PropertyInfo> GetPrimaryKeys()
@@ -97,7 +168,8 @@ namespace SharpIgnite
             return (t as Model<T>);
         }
 
-        public static T Read(Array array)
+        //public static T Read(Array array)
+        public static T Read(object array)
         {
             var t = GetInstance();
             return t.Database
@@ -108,16 +180,24 @@ namespace SharpIgnite
 
         public static List<T> Find()
         {
-            return Find(Array.New());
+            return Find(new { });
         }
 
-        public static List<T> Find(Array where)
+        public static List<T> Find(object where)
         {
             var t = GetInstance();
             return t.Database
                 .From(t.TableName)
                 .Where(where)
                 .Result<T>();
+        }
+
+        public static Database Where(object where)
+        {
+            var t = GetInstance();
+            return t.Database
+                .From(t.TableName)
+                .Where(where);
         }
 
         public static Database OrderBy(string columnName, string order)
@@ -162,6 +242,5 @@ namespace SharpIgnite
             result = result.TrimEnd(',', ' ') + " }";
             return result;
         }
-
     }
 }
