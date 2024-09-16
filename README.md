@@ -4,15 +4,15 @@ SharpIgnite is a lightweight and simple application framework inspired by CodeIg
 
 ## Features
 
-* [TODO] MVC (Model-View-Controller) architecture for organizing your code
-* [TODO] Easy routing for defining clean and user-friendly URLs
+* MVC (Model-View-Controller) architecture for organizing your code
+* Easy routing for defining clean and user-friendly URLs
 * Database support for interacting with popular database systems such as MySQL, SQL Server, SQLite, etc.
 * [TODO] Templating engine for separating your HTML markup from your application logic
 * [TODO] Built-in form validation to ensure data integrity and security
 * [TODO] Security features such as XSS (Cross-Site Scripting) and CSRF (Cross-Site Request Forgery) protection
 * Helper functions to simplify common tasks such as working with arrays, strings, URLs, etc.
-* [TODO] Session management for handling user sessions and authentication
-* [TODO] Error handling and logging for debugging and monitoring your application
+* Session management for handling user sessions and authentication
+* Error handling and logging for debugging and monitoring your application
 
 ## Getting Started
 
