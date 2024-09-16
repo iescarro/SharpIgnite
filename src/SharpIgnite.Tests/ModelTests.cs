@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using S = SharpIgnite;
 
 namespace SharpIgnite.Tests
 {
@@ -8,94 +7,124 @@ namespace SharpIgnite.Tests
     public class ModelTests
     {
         int id = 6;
-        Database db;
 
         [SetUp]
         public void Setup()
         {
-            db = WebApplication.Instance.Database;
-            db.QueryChanged += delegate (object sender, DatabaseEventArgs e) {
+            Application.Instance.Database.QueryChanged += delegate (object sender, DatabaseEventArgs e) {
                 Console.WriteLine(e.Query);
             };
         }
 
-        static readonly object[] DatabaseDrivers = {
-            new object[] { new SqlDatabaseDriver(), "SqlConnection" },
-            new object[] { new SQLiteDatabaseDriver(), "DbConnection" },
-            new object[] { new MySqlDatabaseDriver(), "MySqlConnection" },
-        };
-
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestSave(IDatabaseDriver databaseDriver, string connectionName)
+        [Test]
+        public void TestValid()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var p = new Post {
-                Title = "This is a post"
-            };
-            p.Save();
-            Console.WriteLine(p);
+            var p = new Person();
+            Assert.IsFalse(p.IsValid);
+
+            p.FirstName = "Juan";
+            Assert.IsTrue(p.IsValid);
+
+            p.FirstName = "Evil";
+            Assert.IsFalse(p.IsValid);
         }
 
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestUpdate(IDatabaseDriver databaseDriver, string connectionName)
+        [Test]
+        public void TestSave()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var p = Post.Read(S.Array.New().Add("Id", 1));
-            p.Title = "This is an updated post";
-            p.Update();
+            var n = new News();
+            n.Date = DateTime.Now;
+            n.Content = "A very big news today!";
+            n.Save();
+
+            Console.WriteLine(n);
         }
 
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestDelete(IDatabaseDriver databaseDriver, string connectionName)
+        [Test]
+        public void TestUpdate()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var p = Post.Read(S.Array.New().Add("Id", id));
-            p.Delete();
+            var n = News.Read(new { Id = 1 });
+            n.Content = "Updated news content";
+            n.Update();
         }
 
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestAll(IDatabaseDriver databaseDriver, string connectionName)
+        [Test]
+        public void TestDelete()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var posts = Post.All();
-            foreach (var p in posts) {
-                Console.WriteLine(p);
+            var n = News.Read(new { Id = 1 });
+            n.Delete();
+        }
+
+        [Test]
+        public void TestAll()
+        {
+            var news = News.All();
+            foreach (var n in news) {
+                Console.WriteLine(n);
             }
         }
 
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestOrderBy(IDatabaseDriver databaseDriver, string connectionName)
+        [Test]
+        public void TestFind()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var posts = Post.OrderBy("Id", "DESC").Limit(3).Result<Post>();
-            foreach (var p in posts) {
-                Console.WriteLine(p);
+            var news = News.Find(new { Id = 1 });
+            foreach (var n in news) {
+                Console.WriteLine(n);
             }
-        }
 
-        [Test, TestCaseSource(nameof(DatabaseDrivers))]
-        public void TestFind(IDatabaseDriver databaseDriver, string connectionName)
+            news = News.Where(new { Category = "Science" })
+                .OrderBy("Date", "DESC")
+                .Result<News>();
+
+            news = News.Limit(3)
+                .OrderBy("Date", "DESC")
+                .Result<News>();
+        }
+    }
+
+    [Table("AdminNews")]
+    public class News : Model<News>
+    {
+        [Column("NewsID")]
+        public int Id { get; set; }
+        public DateTime Date { get; set; }
+        public string Category { get; set; }
+        public string Content { get; set; }
+    }
+
+    public class Person : Model<Person>
+    {
+        [Required]
+        public string FirstName { get; set; }
+
+        public Person()
         {
-            db.Adapter(databaseDriver).Load(connectionName);
-            var w = new S.Array("Id", id);
-            var posts = Post.Find(w);
-            foreach (var p in posts) {
-                Console.WriteLine(p);
+            ValidatesWith(new GoodnessValidator());
+        }
+    }
+
+    public class GoodnessValidator : Validator
+    {
+        public override void Validate(object obj)
+        {
+            var p = obj as Person;
+            if (p.FirstName == "Evil") {
+                p.Errors.Add("This person is evil");
             }
         }
     }
 
-    [Table()]
     public class Post : Model<Post>
     {
-        [Column("Id", true, true)] public int PostID { get; set; }
+        public int PostID { get; set; }
+
+        [Required]
         public string Title { get; set; }
     }
 
-    [Table("Comment")]
     public class Comment : Model<Comment>
     {
-        public Post Post { get; set; }
-        [Column("CommentText")] public string Text { get; set; }
+        [Column("Comment")]
+        public string CommentText { get; set; }
     }
 }

@@ -6,17 +6,12 @@
  * 
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-
 namespace SharpIgnite.Tests
 {
     /// <summary>
     /// Description of MainForm.
     /// </summary>
-    public partial class MainForm : Form
+    public partial class MainForm : System.Windows.Forms.Form
     {
         public MainForm()
         {
@@ -24,7 +19,7 @@ namespace SharpIgnite.Tests
             // The InitializeComponent() call is required for Windows Forms designer support.
             //
             InitializeComponent();
-            
+
             //
             // TODO: Add constructor code after the InitializeComponent() call.
             //

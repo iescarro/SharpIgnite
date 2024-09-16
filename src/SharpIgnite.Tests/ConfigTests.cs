@@ -6,14 +6,15 @@ namespace SharpIgnite.Tests
     public class ConfigTests
     {
         [Test]
-        public void TestItem()
+        public void TestGet()
         {
-            var driver = Config.Item("DatabaseDriver");
+            var driver = Config.Get("DB_CONNECTION");
+            Assert.AreEqual("sqlite", driver);
 
-            var x = Config.Item("SettingNotFound");
-            Assert.IsEmpty(x);
+            var x = Config.Get("SettingNotFound");
+            Assert.IsNull(x);
 
-            int costParameter = Config.Item<int>("CostParameter");
+            int costParameter = Config.Get<int>("CostParameter");
             Assert.AreEqual(13, costParameter);
         }
     }

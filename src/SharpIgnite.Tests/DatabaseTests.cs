@@ -9,14 +9,14 @@ namespace SharpIgnite.Tests
     [TestFixture]
     public class DatabaseTests
     {
-        S.IDatabaseDriver databaseDriver;
-        S.Database db;
+        IDatabaseAdapter databaseAdapter;
+        Database db;
 
         [SetUp]
         public void Setup()
         {
-            databaseDriver = new DummyDatabaseDriver(new S.SqlQueryBuilder());
-            db = new S.Database(databaseDriver);
+            databaseAdapter = new DummyDatabaseAdapter(new SqlQueryBuilder());
+            db = S.Database.Instance.Adapter(databaseAdapter); // new S.Database(databaseDriver);
         }
 
         [Test]
@@ -50,8 +50,6 @@ namespace SharpIgnite.Tests
         [Test]
         public void TestSelect()
         {
-            var databaseDriver = new DummyDatabaseDriver(new S.SqlQueryBuilder());
-
             db.Select("av.ValueInt")
                 .From("AnswerValue av")
                 .Join("Answer a", "a.AnswerID = av.AnswerID")
@@ -95,8 +93,8 @@ namespace SharpIgnite.Tests
             int? questionContainerID = 1;
             string variableName = "Some variable name";
 
-            var db = new S.Database(databaseDriver);
-            db.QueryChanged += delegate (object sender, S.DatabaseEventArgs e) {
+            //var db = new Database(databaseDriver);
+            db.QueryChanged += delegate (object sender, DatabaseEventArgs e) {
                 Console.WriteLine(e.Query);
             };
             if (questionContainerID == null) {
@@ -105,7 +103,7 @@ namespace SharpIgnite.Tests
                 db.Where("QuestionContainerID = " + questionContainerID.Value);
                 db.Where("Variablename = '" + variableName + "'");
             }
-            db.Get("QuestionContainer").Count();
+            db.From("QuestionContainer").Count();
 
             string query = @"SELECT COUNT(*)
 FROM QuestionContainer
@@ -118,7 +116,7 @@ AND Variablename = 'Some variable name'";
         [Test]
         public void b()
         {
-            S.WebApplication.Instance.Database.LoadConnectionString(@"Server=.\SQLExpress;Database=eform;Integrated Security=True;");
+            Application.Instance.Database.LoadConnectionString(@"Server=.\SQLExpress;Database=eform;Integrated Security=True;");
 
             int i = 1;
             foreach (var q in Question.Find(S.Array.New().Add("QuestionID", 3722))) {
@@ -130,12 +128,12 @@ AND Variablename = 'Some variable name'";
         [Test]
         public void a()
         {
-            db.QueryChanged += delegate (object sender, S.DatabaseEventArgs e) {
+            db.QueryChanged += delegate (object sender, DatabaseEventArgs e) {
                 //                Console.WriteLine(e.Query);
             };
             var news = db
                 .Select("*")
-                .Get("AdminNews")
+                .From("AdminNews")
                 .Limit(3)
                 .Result<AdminNews>();
 
@@ -149,7 +147,7 @@ AND Variablename = 'Some variable name'";
         {
             var users = db
                 .Select("*")
-                .Get("[User]")
+                .From("[User]")
                 .OrderBy("UserID")
                 .OrderBy("Username", "DESC")
                 .Limit(5)
@@ -174,9 +172,10 @@ AND Variablename = 'Some variable name'";
         {
             var user = db
                 .Select("*")
-                .Get("[User]")
+                .From("[User]")
+                .Where(new { UserID = 1 })
                 .Row<User>();
-            Console.WriteLine(user.Username);
+            Console.WriteLine(db.LastQuery);
         }
 
         [Test]
@@ -190,37 +189,15 @@ AND Variablename = 'Some variable name'";
         public void TestQueryFromFile()
         {
             var connectionString = @"database=eform2;server=.\SQLEXPRESS;Trusted_Connection=True;";
-            var databaseDriver = new S.SqlDatabaseDriver(connectionString);
-            db = new S.Database(databaseDriver);
+            var databaseDriver = new SqlDatabaseAdapter(connectionString);
+            //db = new Database(databaseDriver);
             db.QueryFromFile(@"C:\Users\Ian\Downloads\Option.sql");
         }
     }
 
-    public class User : Model<User>
+    public class DummyDatabaseAdapter : DatabaseAdapter
     {
-        public int Id { get; set; }
-        public string Email { get; set; }
-        public string Name { get; set; }
-        public string Username { get; set; }
-    }
-
-    public class Question : Model<Question>
-    {
-        public string Internal { get; set; }
-    }
-
-    public class AnswerValue : Model<AnswerValue>
-    {
-    }
-
-    public class AdminNews : Model<AdminNews>
-    {
-        public string News { get; set; }
-    }
-
-    public class DummyDatabaseDriver : S.DatabaseDriver
-    {
-        public DummyDatabaseDriver(S.ISqlQueryBuilder queryBuilder)
+        public DummyDatabaseAdapter(ISqlQueryBuilder queryBuilder)
         {
             this.QueryBuilder = queryBuilder;
         }
@@ -230,19 +207,42 @@ AND Variablename = 'Some variable name'";
             return new SqlConnection(connectionString); // Just a dummy
         }
 
-        protected override int ExecuteNonQuery(string query)
+        public override int NonQuery(string query, params IDataParameter[] parameters)
         {
             return 0;
         }
 
-        protected override IDataReader ExecuteReader(string query)
+        public override IDataReader Reader(string query, params IDataParameter[] parameters)
         {
             return null;
         }
 
-        protected override T ExecuteScalar<T>(string query)
+        public override T Scalar<T>(string query, params IDataParameter[] parameters)
         {
             return default(T);
         }
+    }
+
+    public class User : Model<User>
+    {
+        public int Id { get; set; }
+        public string Username { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+    }
+
+    public class AdminNews
+    {
+        public string News { get; set; }
+    }
+
+    public class Question : Model<Question>
+    {
+        public string Internal { get; set; }
+    }
+
+    public class AnswerValue
+    {
+
     }
 }
