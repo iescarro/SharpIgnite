@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 
 namespace SharpIgnite
 {
@@ -18,10 +19,15 @@ namespace SharpIgnite
 
         public static IDatabaseAdapter Connection(string connector, string connectionString)
         {
-            if (connector == "sqlite") {
+            if (connector == "mysql") {
+                return Connection(new MySqlDatabaseAdapter(connectionString));
+            } else if (connector == "sqlite") {
                 return Connection(new SQLiteDatabaseAdapter(connectionString));
+            } else if (connector == "sqlserver") {
+                return Connection(new SqlDatabaseAdapter(connectionString));
+            } else {
+                throw new NotSupportedException("Database provider is not supported");
             }
-            return Connection(new SqlDatabaseAdapter(connectionString));
         }
 
         public static IDatabaseAdapter Connection(IDatabaseAdapter connector)
