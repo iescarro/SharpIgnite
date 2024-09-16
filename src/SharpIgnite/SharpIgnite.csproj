@@ -97,7 +97,7 @@
     <Compile Include="Crypt.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="DatabaseAdapter.cs" />
-    <Compile Include="Db.cs" />
+    <Compile Include="DB.cs" />
     <Compile Include="EmailValidator.cs" />
     <Compile Include="Form.cs" />
     <Compile Include="HttpHelper.cs" />
