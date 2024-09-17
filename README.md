@@ -30,6 +30,10 @@ For more detailed instructions on how to use SharpIgnite, please refer to the do
 
 We welcome contributions from the community to help improve SharpIgnite. If you encounter any bugs, issues, or have suggestions for new features, please submit a pull request or open an issue on the GitHub repository.
 
+## Wiki
+
+Wiki on Notion, https://receptive-bass-656.notion.site/SharpIgnite-7f98e30222f54cf89573c7e11a6d87f4
+
 ## Publish
 
 We pack and push SharpIgnite via NuGet. Use the following commands:
